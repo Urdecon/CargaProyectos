@@ -147,10 +147,7 @@ class TransformResumenStep:
 
             # A ORIGEN (YTD del año seleccionado) ≤ última fecha (mes)
             if date_col:
-                jpl_ytd = jpl_f[
-                    (jpl_f[date_col].dt.year == ext.selected_year) &
-                    (jpl_f[date_col] <= last_day_ts)
-                ].copy()
+                jpl_ytd = jpl_f[jpl_f[date_col] <= last_day_ts].copy()
             else:
                 jpl_ytd = jpl_f.copy()
 

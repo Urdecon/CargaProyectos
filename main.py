@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # Usa None para no filtrar por empresa/proyecto.
     # ──────────────────────────────────────────────────────────────
     COMPANY = "Construcciones Urdecon S.A."
-    PROJECT = "PY_002427"
+    PROJECT = "PY_002401"
     YEAR: int = 2025
     MONTH: int = 8
 

@@ -1,5 +1,6 @@
 # application/pipeline/steps/extract_resumen.py
 from __future__ import annotations
+# application/pipeline/steps/extract_resumen.py
 
 from dataclasses import dataclass, field
 from datetime import date
@@ -26,9 +27,10 @@ class ExtractOutput:
     produccion_mes: pd.DataFrame
     tasklines: pd.DataFrame
     proporcionales: pd.DataFrame
+    planning_lines: pd.DataFrame
 
-    # NUEVO: líneas de planificación (para certificaciones)
-    planning_lines: pd.DataFrame = field(default_factory=lambda: pd.DataFrame())
+    # NUEVO: dataset para “Facturas por capítulo”
+    facturas_capitulo: pd.DataFrame = field(default_factory=lambda: pd.DataFrame())
 
 
 class ExtractResumenStep:
@@ -50,18 +52,9 @@ class ExtractResumenStep:
         pendientes = self.repo.fetch_pendientes_mes(company_name, project_no, month_start, month_end)
         produccion = self.repo.fetch_produccion_mes(company_name, project_no, month_start, month_end)
         task = self.repo.fetch_tasklines(company_name, project_no)
-        prop = (
-            self.repo.fetch_proporcionales(project_no, company_name)
-            if (company_name and project_no)
-            else pd.DataFrame(columns=["gastos_generales", "postventa"])
-        )
-
-        # NUEVO: extraer job_planning_lines (para certificaciones)
-        # Debe devolver al menos estas columnas (nombres o alias equivalentes):
-        #   Planning_Date, Gen_Prod_Posting_Group, Line_Amount, Job_No, Job_Task_No,
-        #   Company_Name (y/o CompanyId).
+        prop = self.repo.fetch_proporcionales(project_no, company_name) if (company_name and project_no) else \
+            pd.DataFrame(columns=["gastos_generales", "postventa"])
         planning = self.repo.fetch_job_planning_lines(company_name, project_no)
-
         # CompanyId: preferimos el que viene en FLE; si no, resolvemos por repo
         company_id = None
         if "company_id" in fle.columns and not fle.empty:
@@ -69,6 +62,14 @@ class ExtractResumenStep:
             company_id = vals[0] if vals else None
         if company_id is None and company_name and project_no:
             company_id = self.repo._resolve_company_id(company_name, project_no)
+
+        # NUEVO: “Facturas por capítulo”
+        facturas_capitulo = self.repo.fetch_facturas_por_capitulo(
+            company_display_name=company_name,
+            project_no=project_no,
+            d1=month_start,
+            d2=month_end,
+        )
 
         return ExtractOutput(
             company_name=company_name,
@@ -84,5 +85,6 @@ class ExtractResumenStep:
             produccion_mes=produccion,
             tasklines=task,
             proporcionales=prop,
-            planning_lines=planning,  # ← NUEVO
+            facturas_capitulo=facturas_capitulo,
+            planning_lines=planning,
         )
