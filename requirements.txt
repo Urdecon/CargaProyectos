@@ -1,0 +1,8 @@
+# requirements.txt
+pandas
+numpy
+psycopg[binary]
+pydantic
+pydantic-settings
+SQLAlchemy
+python-dotenv
